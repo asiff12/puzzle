@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A Small Puzzle</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+
+      body {
+        min-height: 100vh;
+        background: linear-gradient(180deg, #0f2a33, #234e5a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 390px;
+        min-height: 90vh;
+        border-radius: 20px;
+        padding: 32px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      /* =========================
+         PUZZLE LOGO
+      ========================== */
+      .puzzle {
+        font-size: 64px;
+        margin-bottom: 24px;
+        animation: float 3.5s ease-in-out infinite,
+          glow 2.5s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0% {
+          transform: translateY(0) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-14px) rotate(5deg);
+        }
+        100% {
+          transform: translateY(0) rotate(0deg);
+        }
+      }
+
+      @keyframes glow {
+        0% {
+          filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
+        }
+        50% {
+          filter: drop-shadow(0 0 14px rgba(120, 255, 255, 0.6));
+        }
+        100% {
+          filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
+        }
+      }
+
+      h1 {
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+
+      .subtitle {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        opacity: 0.85;
+        margin-bottom: 40px;
+      }
+
+      /* =========================
+         3D BUTTON
+      ========================== */
+      .btn {
+        position: relative;
+        background: linear-gradient(180deg, #ffffff, #e6e6e6);
+        color: #0f2a33;
+        border: none;
+        border-radius: 999px;
+        padding: 16px 38px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 10px 0 #cfcfcf, 0 18px 30px rgba(0, 0, 0, 0.25);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        overflow: hidden;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .btn:active {
+        transform: translateY(6px);
+        box-shadow: 0 4px 0 #cfcfcf, 0 8px 16px rgba(0, 0, 0, 0.25);
+      }
+
+      /* Ripple effect */
+      .btn span {
+        position: absolute;
+        border-radius: 50%;
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        background: rgba(255, 255, 255, 0.7);
+      }
+
+      @keyframes ripple {
+        to {
+          transform: scale(4);
+          opacity: 0;
+        }
+      }
+
+      .hint {
+        margin-top: 18px;
+        font-size: 0.75rem;
+        opacity: 0.6;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .puzzle-screen {
+        width: 100%;
+        animation: fadeIn 0.6s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .image-box {
+        margin: 24px 0;
+        width: 100%;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      .image-box img {
+        width: 100%;
+        display: block;
+      }
+
+      input {
+        width: 100%;
+        margin-top: 16px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        border: none;
+        font-size: 1rem;
+        outline: none;
+        text-align: center;
+      }
+
+      .btn.small {
+        margin-top: 18px;
+        padding: 14px 30px;
+        font-size: 0.9rem;
+      }
+
+      .feedback {
+        margin-top: 12px;
+        font-size: 0.85rem;
+        opacity: 0.85;
+      }
+
+      /* ===== MODAL ===== */
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+
+      .modal.show {
+        display: flex;
+      }
+
+      .modal-box {
+        background: #ffffff;
+        color: #0f2a33;
+        padding: 28px 24px;
+        border-radius: 18px;
+        width: 85%;
+        max-width: 320px;
+        text-align: center;
+        animation: fadeIn 0.4s ease;
+      }
+
+      .modal-box h2 {
+        margin-bottom: 8px;
+      }
+
+      .modal-box p {
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+      }
+
+      .sequence-box {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 18px 0 6px;
+      }
+
+      .num-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #ffffff;
+        position: relative;
+      }
+
+      .num-box input {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        border: none;
+        color: #ffffff;
+        text-align: center;
+        font-size: 0.95rem;
+        font-weight: 600;
+        outline: none;
+      }
+
+      /* hint code */
+      .info-icon {
+        position: absolute;
+        bottom: -24px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #ffffff;
+        color: #0f2a33;
+        font-size: 0.7rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        transition: transform 0.2s ease;
+      }
+
+      .info-icon:hover {
+        transform: translateY(2px);
+      }
+
+      .modal-box.ending {
+        padding: 32px 24px;
+      }
+
+      .treasure-img {
+        width: 120px;
+        margin-bottom: 18px;
+        animation: floatChest 3s ease-in-out infinite;
+      }
+
+      @keyframes floatChest {
+        0% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-8px);
+        }
+        100% {
+          transform: translateY(0);
+        }
+      }
+
+      .logic-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .logic-code {
+        min-width: 56px;
+        font-weight: 600;
+        opacity: 0.9;
+      }
+
+      .logic-desc {
+        text-align: justify;
+        line-height: 1.6;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <!-- =========================
+         INTRO SCREEN
+    ========================== -->
+      <div id="intro">
+        <div class="puzzle">🧩</div>
+
+        <h1>A Small Puzzle</h1>
+        <p class="subtitle">Something to spend your time.</p>
+
+        <button class="btn" id="readyBtn">I'm Ready</button>
+
+        <p class="hint">Enjoy it.</p>
+      </div>
+
+      <!-- =========================
+         PUZZLE 1
+    ========================== -->
+      <div class="puzzle-screen hidden" id="puzzle1">
+        <h1>Puzzle 1</h1>
+
+        <p class="subtitle">
+          Look carefully.<br />
+          Some letters are trying to stand out.<br />
+          Arrange it.
+        </p>
+
+        <div class="image-box">
+          <img src="puzzle1.jpg" alt="Puzzle Image" />
+        </div>
+
+        <input
+          type="text"
+          id="answer1"
+          placeholder="Type your answer here"
+          autocomplete="off"
+        />
+
+        <button class="btn small" id="submit1">Submit</button>
+
+        <p class="feedback" id="feedbackText"></p>
+      </div>
+      <!-- =========================
+     PUZZLE 2
+========================== -->
+      <div class="puzzle-screen hidden" id="puzzle2">
+        <h1>Puzzle 2</h1>
+
+        <p class="subtitle">
+          Look closely.<br />
+          Something is connected.
+        </p>
+
+        <!-- Image -->
+        <div class="image-box">
+          <img src="puzzle2.png" alt="Puzzle Image" />
+        </div>
+
+        <!-- Clue -->
+        <p class="logic-text">Clue : a letter before <strong>B</strong></p>
+
+        <!-- Sequence -->
+        <div class="logic-box">
+          <div class="sequence-box">
+            <div class="num-box">2</div>
+
+            <div class="num-box">
+              <input type="number" id="seq1" />
+              <div class="info-icon" id="hintTrigger">i</div>
+            </div>
+
+            <div class="num-box">
+              <input type="number" id="seq2" />
+            </div>
+
+            <div class="num-box">8</div>
+            <div class="num-box">10</div>
+            <div class="num-box">11</div>
+          </div>
+        </div>
+
+        <button class="btn small" id="submit2">Submit</button>
+        <p class="feedback" id="feedback2"></p>
+      </div>
+      <!-- =========================
+     PUZZLE 3 (FINAL)
+========================== -->
+      <div class="puzzle-screen hidden" id="puzzle3">
+        <h1>Puzzle 3</h1>
+
+        <p class="subtitle">
+          Final test.<br />
+          The treasure is locked. Find 3 numbers to open it.
+        </p>
+
+        <div class="image-box">
+          <img src="puzzle3.png" alt="Puzzle Image" />
+        </div>
+
+        <!-- Code Input -->
+        <div class="sequence-box">
+          <div class="num-box"><input type="number" id="code1" /></div>
+          <div class="num-box"><input type="number" id="code2" /></div>
+          <div class="num-box"><input type="number" id="code3" /></div>
+        </div>
+
+        <!-- Clues -->
+        <div class="logic-box">
+          <div class="logic-row">
+            <span class="logic-code">1 5 7</span>
+            <span class="logic-desc">Nothing is correct</span>
+          </div>
+          <div class="logic-row">
+            <span class="logic-code">3 9 5</span>
+            <span class="logic-desc"
+              >Two correct, one of them wrong position</span
+            >
+          </div>
+          <div class="logic-row">
+            <span class="logic-code">8 6 1</span>
+            <span class="logic-desc">One correct and right position</span>
+          </div>
+          <div class="logic-row">
+            <span class="logic-code">9 6 4</span>
+            <span class="logic-desc"
+              >Two correct, one of them wrong position</span
+            >
+          </div>
+        </div>
+
+        <button class="btn small" id="submit3">Submit</button>
+        <p class="feedback" id="feedback3"></p>
+      </div>
+
+      <!-- puzzle1 modal true answer -->
+      <div class="modal" id="successModal">
+        <div class="modal-box">
+          <h2>Nice.</h2>
+          <p>You noticed the sign.</p>
+          <button class="btn small" id="continueBtn">Continue</button>
+        </div>
+      </div>
+      <!-- puzzle2 hint modal -->
+      <div class="modal" id="hintModal">
+        <div class="modal-box">
+          <h2>Hint</h2>
+          <p>count the clue</p>
+          <button class="btn small" id="closeHint">OK</button>
+        </div>
+      </div>
+      <!-- puzzle2 modal true answer-->
+      <div class="modal" id="puzzle2Modal">
+        <div class="modal-box">
+          <h2>Great.</h2>
+          <p>Pinter juga lu:v.</p>
+          <button class="btn small" id="continuePuzzle3">Continue</button>
+        </div>
+      </div>
+      <!-- puzzle3 modal true -->
+      <div class="modal" id="endingModal">
+        <div class="modal-box ending">
+          <img src="treasure.png" alt="Treasure" class="treasure-img" />
+
+          <h2>You found it.</h2>
+          <p>
+            Not because you rushed,<br />
+            but because you paid attention.
+          </p>
+
+          <button class="btn small" id="finishBtn">Open</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const readyBtn = document.getElementById("readyBtn");
+      const intro = document.getElementById("intro");
+      const puzzle1 = document.getElementById("puzzle1");
+
+      const submit1 = document.getElementById("submit1");
+      const answer1 = document.getElementById("answer1");
+      const feedbackText = document.getElementById("feedbackText");
+
+      const successModal = document.getElementById("successModal");
+      const continueBtn = document.getElementById("continueBtn");
+
+      // Start puzzle
+      readyBtn.addEventListener("click", () => {
+        intro.style.display = "none";
+        puzzle1.classList.remove("hidden");
+      });
+
+      // Submit answer
+      submit1.addEventListener("click", () => {
+        const value = answer1.value.trim().toUpperCase();
+        const sortedInput = value.split("").sort().join("");
+        feedbackText.textContent = "";
+
+        if (value === "SIGN") {
+          successModal.classList.add("show");
+        } else if (value == "SING") {
+          feedbackText.textContent = "Almost right:)";
+        } else if (sortedInput === "GINS") {
+          feedbackText.textContent = "You found the letters. Arrange It:).";
+        } else {
+          feedbackText.textContent = "No no yaa:v";
+        }
+      });
+
+      // Continue to next puzzle
+      continueBtn.onclick = () => {
+        successModal.classList.remove("show");
+        puzzle1.classList.add("hidden");
+        puzzle2.classList.remove("hidden");
+      };
+
+      //puzzle2
+      const submit2 = document.getElementById("submit2");
+      const seq1 = document.getElementById("seq1");
+      const seq2 = document.getElementById("seq2");
+      const feedback2 = document.getElementById("feedback2");
+      const puzzle2Modal = document.getElementById("puzzle2Modal");
+
+      const hintTrigger = document.getElementById("hintTrigger");
+      const hintModal = document.getElementById("hintModal");
+      const closeHint = document.getElementById("closeHint");
+
+      hintTrigger.onclick = () => {
+        hintModal.classList.add("show");
+      };
+
+      closeHint.onclick = () => {
+        hintModal.classList.remove("show");
+      };
+
+      submit2.onclick = () => {
+        const a = seq1.value;
+        const b = seq2.value;
+
+        const correctA = a === "3";
+        const correctB = b === "5";
+
+        feedback2.textContent = "";
+
+        if (correctA && correctB) {
+          puzzle2Modal.classList.add("show");
+        } else if ((correctA && !correctB) || (!correctA && correctB)) {
+          feedback2.textContent = "almost right, find the one";
+        } else {
+          feedback2.textContent = "No No yaa:v";
+        }
+      };
+
+      // continue to puzzle 3 button
+      const continuePuzzle3 = document.getElementById("continuePuzzle3");
+      const puzzle2 = document.getElementById("puzzle2");
+      const puzzle3 = document.getElementById("puzzle3");
+
+      continuePuzzle3.onclick = () => {
+        puzzle2Modal.classList.remove("show");
+        puzzle2.classList.add("hidden");
+        puzzle3.classList.remove("hidden");
+      };
+
+      // =========================
+      // Puzzle 3 Logic
+      // =========================
+      submit3.onclick = () => {
+        const a = document.getElementById("code1").value;
+        const b = document.getElementById("code2").value;
+        const c = document.getElementById("code3").value;
+
+        const inputs = [a, b, c];
+        const correct = ["3", "6", "9"];
+
+        // hitung berapa input yang diisi
+        const filledCount = inputs.filter((v) => v !== "").length;
+
+        // hitung berapa yang benar (posisi juga benar)
+        let correctCount = 0;
+        if (a === "3") correctCount++;
+        if (b === "6") correctCount++;
+        if (c === "9") correctCount++;
+
+        feedback3.textContent = "";
+
+        // === RULES ===
+
+        // kosong semua
+        if (filledCount === 0) {
+          feedback3.textContent = "No No yaa:v";
+          return;
+        }
+
+        // semua benar
+        if (correctCount === 3) {
+          endingModal.classList.add("show");
+          return;
+        }
+
+        // tidak ada yang benar
+        if (correctCount === 0) {
+          feedback3.textContent = "No No yaa:v";
+          return;
+        }
+
+        // tepat 1 benar (isi 1 / 2 / 3)
+        if (correctCount === 1) {
+          feedback3.textContent = "You found one";
+          return;
+        }
+
+        // tepat 2 benar
+        if (correctCount === 2) {
+          feedback3.textContent = "find one more";
+          return;
+        }
+      };
+
+      // =========================
+      // Ending Button
+      // =========================
+      const finishBtn = document.getElementById("finishBtn");
+
+      finishBtn.onclick = () => {
+        endingModal.classList.remove("show");
+      };
+    </script>
+  </body>
+</html>
